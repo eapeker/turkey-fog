@@ -218,3 +218,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# turkey-fog
+data/
+scripts/00_repeat.py
