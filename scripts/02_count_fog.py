@@ -1,6 +1,4 @@
 import pandas as pd
-import os
-os.chdir("C:/Users/emina/Desktop/eumetsat/turkey-fog")
 
 df=pd.read_csv("data/raw/LTAC.csv",na_values="M")
 low_vis=df.vsby<0.62
