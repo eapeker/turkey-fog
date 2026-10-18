@@ -1,0 +1,10 @@
+name: turkey-fog
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+  - pandas
+  - pytest
+  - ipykernel
+  - pyyaml
+  - openpyxl
