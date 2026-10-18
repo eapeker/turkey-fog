@@ -10,7 +10,7 @@
 - **Ayarlar:**
   - Değişkenler: tümü
   - Enlem/boylam eklendi: evet
-  - Zaman dilimi: [kontrol et: UTC mi?]
+  - Zaman dilimi: UTC (METAR rapor saatiyle karşılaştırılarak doğrulandı)
   - Eksik değer gösterimi: M
   - Format: virgülle ayrılmış CSV
   - MADIS HFMETAR / 5 dakikalık ASOS: seçilmedi
