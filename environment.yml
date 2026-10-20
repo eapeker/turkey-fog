@@ -8,3 +8,6 @@ dependencies:
   - ipykernel
   - pyyaml
   - openpyxl
+  - pip
+  - pip:
+      - eumdac
