@@ -1,5 +1,6 @@
 name: turkey-fog
 channels:
+  - conda-forge
   - defaults
 dependencies:
   - python=3.11
@@ -8,6 +9,9 @@ dependencies:
   - ipykernel
   - pyyaml
   - openpyxl
+  - satpy
+  - matplotlib
+  - cartopy
   - pip
   - pip:
       - eumdac
