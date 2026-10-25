@@ -1,4 +1,5 @@
 # turkey-fog
+![tests](https://github.com/eapeker/turkey-fog/actions/workflows/tests.yml/badge.svg)
 
 Fog detection over Turkey from MSG/SEVIRI satellite imagery, using airport METAR reports as ground truth.
 
@@ -53,7 +54,7 @@ Fog definition: visibility below 0.62 mi (≈1 km) and a present-weather code of
 - [x] METAR download, UTC check and fog event extraction for LTAC
 - [x] First unit tests for the METAR functions
 - [x] SEVIRI access via EUMDAC, Satpy processing and first IR10.8 − IR3.9 map
-- [ ] Continuous integration with GitHub Actions
+- [x] Continuous integration with GitHub Actions
 - [ ] Matched dataset: SEVIRI pixel windows paired with METAR fog / no-fog labels
 - [ ] Threshold baseline and ML classifier with validation metrics
 - [ ] Experiment tracking with MLflow and a Docker image for reproducible runs
