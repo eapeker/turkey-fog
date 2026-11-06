@@ -15,3 +15,6 @@ dependencies:
   - pip
   - pip:
       - eumdac
+      - scikit-learn==1.9.1
+      - xgboost==3.2.0
+  
