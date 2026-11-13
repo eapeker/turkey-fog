@@ -223,3 +223,5 @@ __marimo__/
 # turkey-fog
 data/
 scripts/00_repeat.py
+mlflow.db
+mlruns/

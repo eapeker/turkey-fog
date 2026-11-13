@@ -1,12 +1,16 @@
+import mlflow
 import numpy as np
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GroupKFold, cross_val_predict
+from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neural_network import MLPClassifier
+
+mlflow.set_tracking_uri("sqlite:///mlflow.db")
+mlflow.set_experiment("turkey-fog")
 
 # --- data and split (same as 09_baseline.py) ---
 df = pd.read_csv("data/processed/features.csv", parse_dates=["valid"])
@@ -39,6 +43,8 @@ def report(name, d, pred):
         print(f"{name:7s} {s:4s} n={len(g):3d} POD={pod:.2f} FAR={far:.2f} CSI={csi:.2f}")
 
 # --- train with night-grouped CV threshold, evaluate once on test ---
+runs = {}  # model name -> MLflow run id
+
 def fit_eval(name, model):
     oof = cross_val_predict(model, train[FEATURES], train["label"], groups=train["night_id"],
                             cv=GroupKFold(5), method="predict_proba")[:, 1]
@@ -48,10 +54,22 @@ def fit_eval(name, model):
     pred = (model.predict_proba(test[FEATURES])[:, 1] > best).astype(int)
     print(f"{name}: probability threshold {best:.2f}")
     report(name, test, pred)
+    pod, far, csi = scores(test["label"], pred)
+    with mlflow.start_run(run_name=name) as run:
+        runs[name] = run.info.run_id
+        mlflow.log_param("estimator", str(model))
+        mlflow.log_param("threshold", round(float(best), 2))
+        mlflow.log_metrics({"pod": pod, "far": far, "csi": csi})
     return pred
 
 preds = {"thresh": (test["btd_center"] > 4.0).astype(int).values}
 report("thresh", test, preds["thresh"])
+with mlflow.start_run(run_name="thresh") as run:
+    runs["thresh"] = run.info.run_id
+    mlflow.log_param("estimator", "btd_center > 4.0 K")
+    pod, far, csi = scores(test["label"], preds["thresh"])
+    mlflow.log_metrics({"pod": pod, "far": far, "csi": csi})
+
 preds["logreg"] = fit_eval("logreg", make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000)))
 preds["xgb"] = fit_eval("xgb", XGBClassifier(n_estimators=200, max_depth=3, learning_rate=0.05, subsample=0.8))
 preds["rf"] = fit_eval("rf", RandomForestClassifier(n_estimators=300, min_samples_leaf=5, random_state=0))
@@ -66,8 +84,12 @@ for _ in range(1000):
     s = pd.concat([groups[i] for i in rng.integers(0, len(groups), len(groups))])
     for k in preds:
         boot[k].append(scores(s["label"], s[k])[2])
+
 for k, v in boot.items():
-    print(f"{k:7s} CSI 95% interval:", np.nanpercentile(v, [2.5, 97.5]).round(2))
+    lo, hi = np.nanpercentile(v, [2.5, 97.5])
+    print(f"{k:7s} CSI 95% interval: [{lo:.2f} {hi:.2f}]")
+    with mlflow.start_run(run_id=runs[k]):
+        mlflow.log_metrics({"csi_lo": lo, "csi_hi": hi})
 
 for k in preds:
     if k != "xgb":
