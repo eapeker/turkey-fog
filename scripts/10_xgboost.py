@@ -5,6 +5,8 @@ from sklearn.model_selection import GroupKFold, cross_val_predict
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
 
 # --- data and split (same as 09_baseline.py) ---
 df = pd.read_csv("data/processed/features.csv", parse_dates=["valid"])
@@ -52,6 +54,8 @@ preds = {"thresh": (test["btd_center"] > 4.0).astype(int).values}
 report("thresh", test, preds["thresh"])
 preds["logreg"] = fit_eval("logreg", make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000)))
 preds["xgb"] = fit_eval("xgb", XGBClassifier(n_estimators=200, max_depth=3, learning_rate=0.05, subsample=0.8))
+preds["rf"] = fit_eval("rf", RandomForestClassifier(n_estimators=300, min_samples_leaf=5, random_state=0))
+preds["mlp"] = fit_eval("mlp", make_pipeline(StandardScaler(), MLPClassifier(hidden_layer_sizes=(16,), alpha=1e-3, max_iter=2000, random_state=0)))
 
 # --- bootstrap 95% intervals, resampling whole nights ---
 rng = np.random.default_rng(0)
@@ -64,7 +68,8 @@ for _ in range(1000):
         boot[k].append(scores(s["label"], s[k])[2])
 for k, v in boot.items():
     print(f"{k:7s} CSI 95% interval:", np.nanpercentile(v, [2.5, 97.5]).round(2))
-d = np.array(boot["xgb"]) - np.array(boot["logreg"])
-print("xgb - logreg CSI 95% interval:", np.nanpercentile(d, [2.5, 97.5]).round(2))
-d2 = np.array(boot["xgb"]) - np.array(boot["thresh"])
-print("xgb - thresh CSI 95% interval:", np.nanpercentile(d2, [2.5, 97.5]).round(2))
+
+for k in preds:
+    if k != "xgb":
+        d = np.array(boot["xgb"]) - np.array(boot[k])
+        print(f"xgb - {k:6s} CSI 95% interval:", np.nanpercentile(d, [2.5, 97.5]).round(2))
