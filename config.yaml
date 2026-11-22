@@ -1,0 +1,48 @@
+# turkey-fog configuration: everything that changes between runs lives here
+
+paths:
+  metar: [data/raw/LTAC_2018_2024.csv, data/raw/stations_2018_2024.csv]
+  sample_times: data/processed/sample_times_all.csv
+  windows: data/processed/windows_all
+  era5_raw: data/raw/era5land
+  features: data/processed/features_all.csv
+  tmp: data/tmp
+
+stations:              # gap: max time between fog reports in one event (2h for hourly stations)
+  LTAC: {lon: 32.9951, lat: 40.1281, gap: 1h}
+  LTAN: {lon: 32.5619, lat: 37.9790, gap: 2h}
+  LTBY: {lon: 30.5194, lat: 39.8099, gap: 2h}
+  LTCE: {lon: 41.1702, lat: 39.9565, gap: 1h}
+
+years: [2018, 2024]
+
+sampling:
+  night_sza: 95        # solar zenith angle above this = night
+  max_events: 75       # per station
+  per_event: 6         # max fog reports per event
+  neg_ratio: 3         # non-fog samples per fog sample
+  neg_buffer: 3h       # non-fog samples must be this far from any fog report
+  seed: 42
+
+seviri:
+  collection: EO:EUM:DAT:MSG:HRSEVIRI
+  channels: [IR_039, WV_062, WV_073, IR_087, IR_097, IR_108, IR_120, IR_134]
+  window: 5            # pixels, square window around the station
+  search_minutes: 10   # look for a scan within ± this many minutes
+  min_bt: 150          # samples with any brightness temperature below this (K) are dropped
+
+era5:
+  collection: ECMWF/ERA5_LAND/HOURLY
+  gee_project: ee-eminatabeypeker
+  scale: 11132         # metres, ERA5-Land grid (0.1°)
+  bands: [temperature_2m, dewpoint_temperature_2m, skin_temperature,
+          u_component_of_wind_10m, v_component_of_wind_10m]
+
+split:
+  train_years: [2018, 2022]
+  test_years: [2023, 2024]
+  test_station: LTAC
+
+mlflow:
+  tracking_uri: sqlite:///mlflow.db
+  experiment: turkey-fog

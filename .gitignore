@@ -225,3 +225,4 @@ data/
 scripts/00_repeat.py
 mlflow.db
 mlruns/
+models/
