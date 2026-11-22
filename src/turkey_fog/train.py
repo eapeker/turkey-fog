@@ -13,6 +13,7 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 
 from turkey_fog.era5 import ERA5_FEATURES
+from turkey_fog.metrics import bootstrap_csi, scores
 
 
 def seviri_features(cfg):
@@ -33,17 +34,6 @@ def make_models():
             "rf": RandomForestClassifier(n_estimators=300, min_samples_leaf=5, random_state=0),
             "mlp": make_pipeline(StandardScaler(), MLPClassifier(hidden_layer_sizes=(16,), alpha=1e-3,
                                                                  max_iter=2000, random_state=0))}
-
-
-def scores(y, pred):
-    """POD (hit rate), FAR (share of false alarms) and CSI for the fog class."""
-    h = int(((pred == 1) & (y == 1)).sum())
-    m = int(((pred == 0) & (y == 1)).sum())
-    f = int(((pred == 1) & (y == 0)).sum())
-    pod = h / (h + m) if h + m else np.nan
-    far = f / (h + f) if h + f else 0.0
-    csi = h / (h + m + f) if h + m + f else np.nan
-    return pod, far, csi
 
 
 def split(cfg, df):
@@ -70,20 +60,7 @@ def fit_with_threshold(model, train, feats):
     return model, best, cv
 
 
-def bootstrap_csi(test, preds, n=1000, seed=0):
-    """CSI of each model on 1000 resampled test sets, resampling whole nights."""
-    rng = np.random.default_rng(seed)
-    t = test.assign(**preds)
-    groups = [g for _, g in t.groupby("night_id")]
-    boot = {k: [] for k in preds}
-    for _ in range(n):
-        s = pd.concat([groups[i] for i in rng.integers(0, len(groups), len(groups))])
-        for k in preds:
-            boot[k].append(scores(s["label"], s[k])[2])
-    return {k: np.array(v) for k, v in boot.items()}
-
-
-def run_experiments(cfg, df, model_dir="models"):
+def run_experiments(cfg, df, model_dir="models", config_path="config.yaml"):
     """Threshold baseline + four models × three feature sets. Logs every run to MLflow,
     saves the fitted models and returns a results table."""
     mlflow.set_tracking_uri(cfg["mlflow"]["tracking_uri"])
@@ -122,6 +99,9 @@ def run_experiments(cfg, df, model_dir="models"):
             mlflow.log_params({"model": r["model"], "features": r["features"], "threshold": round(r["threshold"], 2),
                                "train": train_info, "test": test_info})
             mlflow.log_metrics({k: r[k] for k in ["pod", "far", "csi", "csi_lo", "csi_hi"]})
+            mlflow.log_artifact(config_path)
+            if r["name"] != "thresh":
+                mlflow.log_artifact(str(Path(model_dir) / f"{r['name']}.joblib"))
     results = pd.DataFrame(rows)
 
     diffs = []

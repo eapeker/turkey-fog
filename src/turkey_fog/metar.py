@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from pyorbital.astronomy import sun_zenith_angle
 
 
 def load_metar(paths):
@@ -35,6 +34,7 @@ def pick_spread(g, k):
 def select_station(df, lon, lat, gap, s):
     """Fog (label 1) and non-fog (label 0) night-time samples for one station.
     s = the "sampling" block of config.yaml."""
+    from pyorbital.astronomy import sun_zenith_angle
     df = mark_fog(df.sort_values("valid").copy())
     df["sza"] = sun_zenith_angle(df["valid"].values, lon, lat)
     night = df["sza"] > s["night_sza"]

@@ -1,0 +1,9 @@
+[project]
+name = "turkey-fog"
+version = "0.1.0"
+description = "Night-time fog detection at Turkish airports from MSG/SEVIRI, ERA5-Land and METAR"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
