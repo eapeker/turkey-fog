@@ -225,4 +225,6 @@ data/
 scripts/00_repeat.py
 mlflow.db
 mlruns/
-models/
+models/*
+!models/mlp.joblib
+!models/mlp_era5.joblib

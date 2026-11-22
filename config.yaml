@@ -46,3 +46,9 @@ split:
 mlflow:
   tracking_uri: sqlite:///mlflow.db
   experiment: turkey-fog
+
+predict:
+  model: mlp           # mlp_era5 is used when ERA5 is available, mlp otherwise
+  era5_lag_days: 5     # ERA5 is published about 5 days after real time
+  era5_timeout: 300    # seconds to wait for ERA5 before falling back to the SEVIRI-only model
+  cache: data/cache    # SEVIRI features and ERA5 values already fetched, for repeated queries

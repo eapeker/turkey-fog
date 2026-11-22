@@ -1,0 +1,28 @@
+{
+  "kind": "fog",
+  "station": "LTAC",
+  "time": "2024-01-20 02:32:00",
+  "lon": 32.9951,
+  "lat": 40.1281,
+  "metar_label": 1,
+  "model": "mlp",
+  "note": "Test-set night (2023-2024, not seen in training), picked as a typical correctly classified case for this demo. Overall skill is in reports/results.csv.",
+  "features": {
+    "IR_039_center": 267.75882,
+    "IR_087_center": 268.0946,
+    "IR_097_center": 240.9657,
+    "IR_108_center": 270.4194,
+    "IR_120_center": 269.72202,
+    "IR_134_center": 251.77672,
+    "WV_062_center": 230.22308,
+    "WV_073_center": 248.94028,
+    "btd_center": 2.6605835,
+    "btd_max": 3.1395874,
+    "btd_mean": 1.8330652,
+    "btd_std": 0.64433455,
+    "dpd": 0.1321868896484375,
+    "t2m_minus_skin": 2.185791015625,
+    "temperature_2m": 275.9121551513672,
+    "wind10": 0.6278609192119957
+  }
+}

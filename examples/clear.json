@@ -1,0 +1,28 @@
+{
+  "kind": "clear",
+  "station": "LTAC",
+  "time": "2024-05-05 22:50:00",
+  "lon": 32.9951,
+  "lat": 40.1281,
+  "metar_label": 0,
+  "model": "mlp",
+  "note": "Test-set night (2023-2024, not seen in training), picked as a typical correctly classified case for this demo. Overall skill is in reports/results.csv.",
+  "features": {
+    "IR_039_center": 270.43134,
+    "IR_087_center": 271.88,
+    "IR_097_center": 245.0927,
+    "IR_108_center": 273.61176,
+    "IR_120_center": 273.7345,
+    "IR_134_center": 255.3668,
+    "WV_062_center": 239.24185,
+    "WV_073_center": 257.17813,
+    "btd_center": 3.18042,
+    "btd_max": 3.7237244,
+    "btd_mean": 3.328385,
+    "btd_std": 0.2313641,
+    "dpd": 2.2555694580078125,
+    "t2m_minus_skin": 1.33978271484375,
+    "temperature_2m": 275.44483947753906,
+    "wind10": 1.752572599515999
+  }
+}

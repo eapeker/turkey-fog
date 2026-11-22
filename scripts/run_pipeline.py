@@ -11,7 +11,8 @@ from turkey_fog.era5 import add_era5, download_era5land, load_era5land
 from turkey_fog.features import build_features
 from turkey_fog.metar import select_times
 from turkey_fog.seviri import download_windows
-from turkey_fog.train import run_experiments
+from turkey_fog.predict import make_examples
+from turkey_fog.train import run_experiments, split
 
 
 def load_sample(cfg):
@@ -57,8 +58,15 @@ def step_train(cfg, args):
     print("saved reports/results.csv, reports/comparisons.csv and models/")
 
 
-STEPS = {"select": step_select, "download": step_download,
-         "era5": step_era5, "features": step_features, "train": step_train}
+def step_examples(cfg, args):
+    df = pd.read_csv(cfg["paths"]["features"], parse_dates=["valid"])
+    _, test = split(cfg, df)
+    for f in make_examples(cfg, test):
+        print("saved", f)
+
+
+STEPS = {"select": step_select, "download": step_download, "era5": step_era5,
+         "features": step_features, "train": step_train, "examples": step_examples}
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
