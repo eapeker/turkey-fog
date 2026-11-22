@@ -1,0 +1,8 @@
+.git
+data
+mlruns
+mlflow.db
+reports
+.pytest_cache
+**/__pycache__
+.vscode

@@ -12,3 +12,14 @@ jobs:
           python-version: "3.11"
       - run: pip install numpy pandas pyyaml pytest
       - run: pytest
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the prediction image
+        run: docker build -t turkey-fog .
+      - name: Run the offline examples inside the image
+        run: |
+          docker run --rm turkey-fog --example fog
+          docker run --rm turkey-fog --example clear

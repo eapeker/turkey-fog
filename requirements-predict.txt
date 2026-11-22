@@ -1,0 +1,12 @@
+# Only what scripts/predict.py needs. Versions match the environment the models were trained in,
+# so the saved scikit-learn models load and behave the same inside the container.
+numpy==2.4.6
+pandas==3.1.1
+scikit-learn==1.9.1
+joblib==1.6.0
+pyyaml==6.0.3
+pyorbital==1.13.0
+satpy==0.60.0
+pyresample==1.35.0
+eumdac==3.1.1
+earthengine-api==1.7.53
