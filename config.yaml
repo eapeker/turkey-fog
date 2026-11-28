@@ -33,7 +33,7 @@ seviri:
 
 era5:
   collection: ECMWF/ERA5_LAND/HOURLY
-  gee_project: ee-eminatabeypeker
+  gee_project: ee-eminatabeypeker   # replace with your own Earth Engine project
   scale: 11132         # metres, ERA5-Land grid (0.1°)
   bands: [temperature_2m, dewpoint_temperature_2m, skin_temperature,
           u_component_of_wind_10m, v_component_of_wind_10m]
@@ -49,6 +49,7 @@ mlflow:
 
 predict:
   model: mlp           # mlp_era5 is used when ERA5 is available, mlp otherwise
-  era5_lag_days: 5     # ERA5 is published about 5 days after real time
+  era5_lag_days: 5     # ERA5-Land-T is about 5 days late; Earth Engine serves the final ERA5-Land, 2-3 months late,
+                       # so hours in between also fall back to the SEVIRI-only model
   era5_timeout: 300    # seconds to wait for ERA5 before falling back to the SEVIRI-only model
   cache: data/cache    # SEVIRI features and ERA5 values already fetched, for repeated queries

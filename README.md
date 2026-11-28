@@ -56,7 +56,7 @@ docker run --rm \
 The tool:
 - refuses daytime hours, because the model was trained on night-time data only;
 - downloads the nearest SEVIRI scan and computes the satellite features;
-- adds ERA5-Land values if they exist for that hour. For the last 5 days ERA5 is not published yet, so the tool uses the satellite-only model and says why. It does the same if ERA5 takes longer than `--era5-timeout` seconds (default 300) or if `--no-era5` is given;
+- adds ERA5-Land values if Earth Engine has them for that hour. Recent hours are not there yet (the final ERA5-Land is months behind, the preliminary ERA5-Land-T about 5 days), so the tool then uses the satellite-only model and says why. It does the same if ERA5 takes longer than `--era5-timeout` seconds (default 300) or if `--no-era5` is given;
 - caches what it downloaded, so the same query is answered instantly the next time.
 
 On Windows (Git Bash), put `MSYS_NO_PATHCONV=1` before `docker run` and use Windows paths for the folders, for example `"$(cygpath -m "$USERPROFILE")/.eumdac:/root/.eumdac:ro"`.
@@ -76,7 +76,7 @@ On Windows (Git Bash), put `MSYS_NO_PATHCONV=1` before `docker run` and use Wind
 | LTBY Eskişehir | 223 | 668 |
 | LTCE Erzurum | 316 | 947 |
 
-**Satellite features.** For each case, the nearest MSG/SEVIRI scan (within ±10 minutes) from the EUMETSAT Data Store, read with [Satpy](https://satpy.readthedocs.io). A 5×5 pixel window around the airport gives 12 features: the brightness temperature of the 8 thermal infrared channels at the centre pixel, and the centre, mean, maximum and standard deviation of IR10.8 − IR3.9. This brightness temperature difference (BTD) is the classic night-time fog signal: fog droplets emit less at 3.9 µm than at 10.8 µm. Windows with any value below 150 K are dropped as invalid (one case, over a very cold cloud top).
+**Satellite features.** For each case, the nearest MSG/SEVIRI scan (within ±10 minutes) from the EUMETSAT Data Store, read with [Satpy](https://satpy.readthedocs.io). A 5×5 pixel window around the airport (a pixel is about 4–5 km over Turkey, so the window covers roughly 20–25 km) gives 12 features: the brightness temperature of the 8 thermal infrared channels at the centre pixel, and the centre, mean, maximum and standard deviation of IR10.8 − IR3.9. This brightness temperature difference (BTD) is the classic night-time fog signal: fog droplets emit less at 3.9 µm than at 10.8 µm. Windows with any value below 150 K are dropped as invalid (one case, over a very cold cloud top).
 
 ![IR10.8 − IR3.9 brightness temperature difference over Turkey, 2019-12-17 00:12 UTC](docs/figures/btd_20191217_0012.png)
 
@@ -84,7 +84,7 @@ On Windows (Git Bash), put `MSYS_NO_PATHCONV=1` before `docker run` and use Wind
 
 **Weather features.** Hourly [ERA5-Land](https://developers.google.com/earth-engine/datasets/catalog/ECMWF_ERA5_LAND_HOURLY) values from Google Earth Engine at each airport, matched to the nearest full hour: 2 m temperature, dew point depression (temperature minus dew point; near 0 means saturated air), 2 m temperature minus surface temperature (positive means the surface is cooling), and 10 m wind speed.
 
-**Evaluation.** Training: all four airports, 2018–2022. Test: LTAC, 2023–2024, used once. Every threshold is chosen on the training data: the BTD threshold, and each model's probability threshold, by 5-fold cross-validation grouped by night (so that reports from one night never sit on both sides of a split). The 95% intervals come from 1,000 bootstrap resamples of whole test nights.
+**Evaluation.** Training: all four airports, 2018–2022. Test: LTAC, 2023–2024, used for final scoring only. Every threshold is chosen on the training data: the BTD threshold, and each model's probability threshold, by 5-fold cross-validation grouped by night (so that reports from one night never sit on both sides of a split). The 95% intervals come from 1,000 bootstrap resamples of whole test nights.
 
 **Metrics.** CSI (critical success index) = hits / (hits + misses + false alarms); it is the intersection over union of the fog class. POD = share of fog cases found. FAR = share of fog alarms that were wrong. Accuracy is not reported: a model that always says "no fog" would score 77% on the test set.
 
@@ -116,10 +116,17 @@ Adding ERA5-Land improves every model clearly. With ERA5-Land alone, POD is abou
 - **Small test set.** 59 fog cases at one airport, so the intervals are wide. Single runs of the random models move by a few points when the row order changes.
 - **Night only.** In daytime the 3.9 µm channel also carries reflected sunlight, and the BTD signal no longer works.
 - **Fog under higher cloud.** Infrared sees the top of the highest cloud. In the test years, 17% of fog cases have a negative BTD, a sign of cloud above the fog. Example: on 21 December 2023 02:00 UTC LTAC reported freezing fog. ERA5-Land was fog-friendly (dew point depression 1.6 K, wind 0.6 m/s), but the satellite saw a cold cloud top (245 K, BTD −1.0 K). The model followed the satellite and missed the fog (probability 0.26, threshold 0.35).
-- **ERA5 is not real-time.** It is published about 5 days late, so operational use would need forecast model data instead, which is less accurate. ERA5 may also include these airports' own surface observations through data assimilation, so the gain could be smaller away from stations.
+- **ERA5 is not real-time.** The preliminary ERA5-Land-T is about 5 days late, and the final version that Earth Engine serves is 2–3 months late. Operational use would need forecast model data instead, which is less accurate and differs from the reanalysis the models were trained on. ERA5 may also include these airports' own surface observations through data assimilation, so the gain could be smaller away from stations.
+- **Model choice on the test set.** I compared 12 model and feature-set combinations on the test set and report the best, so the best score (0.75) is probably a little optimistic. All four models with both sources score 0.63–0.75. The 2023–2024 cases of the other three airports are used in neither training nor test.
 - **Satellite change.** The training years are mostly Meteosat-11 and the test years mostly Meteosat-10, whose BTD is about 0.6–1.1 K lower.
 
 ## Run the pipeline
+
+The `data/` folder is not in the repository. To rebuild it:
+
+1. **METAR.** On the [IEM download form](https://mesonet.agron.iastate.edu/request/download.phtml) select the stations (LTAC in one file, LTAN, LTBY and LTCE in a second one), all available data, 1 January 2018 to 1 January 2025, UTC, comma delimited, missing data as `M`, routine reports and specials. Save the files as `data/raw/LTAC_2018_2024.csv` and `data/raw/stations_2018_2024.csv`. Stations that are not in `config.yaml` are ignored.
+2. **EUMETSAT Data Store.** Put your key and secret in `~/.eumdac/credentials`, one line: `key,secret`.
+3. **Earth Engine.** Run `earthengine authenticate` and set your own project in `config.yaml` (`era5.gee_project`).
 
 All settings (airports, years, sampling, channels, split) are in [config.yaml](config.yaml). The pipeline runs step by step:
 
